@@ -1,8 +1,9 @@
 /*
   HSBA site script
 
-  Loaded on every page of hsba.org by one script tag in the site-wide footer. The file is kept
-  in this repository so the people who run the site can see the custom code that runs on it.
+  Loaded on every page of hsba.org. The file is kept in this repository so the people who run
+  the site can see the custom code that runs on it. The parts it hides are in hsba-site.css,
+  which the page can load in its <head>; if it does not, this script loads it.
 
   What it does:
   - Hides the account status label ("Active Member") and its dot in the header, the label in
@@ -21,8 +22,9 @@
     is read from the page's own data when it is there. Otherwise it is read once from that page
     (one GET) and kept for the browser tab (sessionStorage).
 
-  If anything here fails, the page shows as it does without this script, except that the
-  labels stay hidden (CSS only).
+  If anything here fails, the page shows as it does without this script, except for the parts
+  hidden by hsba-site.css. (If the stylesheet is in the <head> and this script does not run,
+  the card's Account Snapshot list stays hidden.)
 */
 (function () {
   if (window.__hsbaSite) return;
@@ -37,18 +39,21 @@
     STORAGE_KEY: 'hsbaSiteJdNumber' // sessionStorage key: {user, jdNumber}
   };
 
-  // 1. The labels and the dot, by their place in the page (their color changes with the state),
-  //    and the sidebar link, by its address.
-  var style = document.createElement('style');
-  style.textContent =
-    '.nav-account-status,' + // header
-    '.nav-account-status-dot,' + // header: the dot on the avatar
-    '.nav-account-menu__panel__inner > div > div.inline-flex,' + // account menu
-    '.card .pt-16 > .flex-wrap.justify-center,' + // My Account card
-    'li:has(> a[href$="/my-account/memberships-and-subscriptions"])' + // My Account sidebar
-    '{display:none!important}' +
-    '.card .pt-16:has(> .flex-wrap.justify-center){padding-top:3.5rem}';
-  document.head.appendChild(style);
+  // 1. The hidden parts are in hsba-site.css, next to this file. If the page does not
+  //    already load it (in its <head>), it is loaded here.
+  var STYLESHEET = 'hsba-site.css';
+  var thisScript = document.currentScript; // only set while this file first runs
+
+  function loadStylesheet() {
+    if (document.querySelector('link[href*="' + STYLESHEET + '"]')) return;
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = thisScript && thisScript.src
+      ? new URL(STYLESHEET, thisScript.src).href
+      : 'https://bronsonavila.github.io/hsba-site-script/' + STYLESHEET;
+    document.head.appendChild(link);
+  }
+  loadStylesheet();
 
   function cleanText(text) {
     return String(text || '').replace(/\s+/g, ' ').trim();
@@ -165,20 +170,19 @@
       return valueElement;
     }
 
-    var membershipStatus = cleanText(traits && traits.primary_membership_plan);
+    if (!traits) return; // no member data: only the hidden lines
+    var membershipStatus = cleanText(traits.primary_membership_plan);
     var jdValue = addLine(SETTINGS.JD_LABEL, '…');
     if (membershipStatus) addLine(SETTINGS.STATUS_LABEL, membershipStatus);
 
-    getJdNumber(String((traits && (traits.uuid || traits.id)) || ''), function (jdNumber) {
+    getJdNumber(String(traits.uuid || traits.id || ''), function (jdNumber) {
       if (jdNumber) jdValue.textContent = jdNumber;
       else jdValue.parentElement.style.display = 'none';
     });
   }
 
   function run() {
-    var traits = memberTraits();
-    if (!traits) return; // guests: nothing to add
-    updateSnapshot(traits);
+    updateSnapshot(memberTraits()); // guests have no card, so nothing happens
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
