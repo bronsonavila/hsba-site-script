@@ -130,7 +130,8 @@
         return response.ok ? response.text() : '';
       })
       .then(function (html) {
-        var jdNumber = html ? jdNumberFrom(new DOMParser().parseFromString(html, 'text/html')) : '';
+        if (!html) return done(''); // not kept, so the next page tries again
+        var jdNumber = jdNumberFrom(new DOMParser().parseFromString(html, 'text/html'));
         storeJdNumber(userId, jdNumber);
         done(jdNumber);
       })
