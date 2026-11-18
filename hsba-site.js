@@ -18,8 +18,8 @@
     analytics library loads, so the queued call is read first; then analytics.user().traits().
     This also works when a browser blocks the analytics library.
   - JD Number: the "JD Number" field on Account Settings > Personal Information. On that page it
-    is in the page's own data. On other pages it is read once from that page (one GET) and kept
-    for the browser tab (sessionStorage).
+    is read from the page's own data when it is there. Otherwise it is read once from that page
+    (one GET) and kept for the browser tab (sessionStorage).
 
   If anything here fails, the page shows as it does without this script, except that the
   labels stay hidden (CSS only).
@@ -74,7 +74,7 @@
     return null;
   }
 
-  // The JD number from a page's Livewire data, or '' if not there.
+  // The JD number from a page's Livewire data (the HTML as sent), or '' if not there.
   function jdNumberFrom(page) {
     var components = page.querySelectorAll('[wire\\:initial-data]');
     for (var index = 0; index < components.length; index++) {
@@ -84,6 +84,21 @@
         if (value != null) return cleanText(value);
       } catch (error) {}
     }
+    return '';
+  }
+
+  // The JD number on this page. Once Livewire has started, it removes the data from the HTML,
+  // so its running components are read as well.
+  function jdNumberOnThisPage() {
+    var fromHtml = jdNumberFrom(document);
+    if (fromHtml) return fromHtml;
+    try {
+      var components = window.Livewire && typeof window.Livewire.all === 'function' ? window.Livewire.all() : [];
+      for (var index = 0; index < components.length; index++) {
+        var value = components[index].get('customFormData.' + SETTINGS.JD_FIELD_ID);
+        if (value != null && cleanText(value)) return cleanText(value);
+      }
+    } catch (error) {}
     return '';
   }
 
@@ -103,8 +118,8 @@
   }
 
   function getJdNumber(userId, done) {
-    var onThisPage = jdNumberFrom(document);
-    if (onThisPage || location.pathname === SETTINGS.JD_PAGE) {
+    var onThisPage = jdNumberOnThisPage();
+    if (onThisPage) {
       storeJdNumber(userId, onThisPage);
       return done(onThisPage);
     }
