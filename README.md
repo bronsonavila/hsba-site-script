@@ -4,20 +4,14 @@
 
 ## How the site loads them
 
-**If the page's `<head>` can hold tags (best: nothing flashes before it is hidden):**
+Both tags go at the bottom of the page, before the site's Google Maps script:
 
 ```html
 <link rel="stylesheet" href="https://bronsonavila.github.io/hsba-site-script/hsba-site.css">
 <script src="https://bronsonavila.github.io/hsba-site-script/hsba-site.js" defer></script>
 ```
 
-**If only the footer can hold a tag:**
-
-```html
-<script src="https://bronsonavila.github.io/hsba-site-script/hsba-site.js" defer></script>
-```
-
-The script loads `hsba-site.css` itself when the page does not. Hidden parts can show for a moment before the files load, mostly on the first page a member opens.
+The browser does not use a stylesheet until it has run the scripts above it. After the Google Maps script, the hidden parts showed for about 3 seconds on a slow phone. Before it, they showed for about 0 seconds.
 
 ## Updates
 

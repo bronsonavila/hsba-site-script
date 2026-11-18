@@ -1,9 +1,9 @@
 /*
   HSBA site styles
 
-  Used with hsba-site.js (see that file for what the two do). This file can be loaded in the
-  page's <head>; then these parts are hidden before the page shows. If it is not in the
-  <head>, hsba-site.js loads it.
+  Used with hsba-site.js (see that file for what the two do). The page loads this file with
+  its own tag, placed before the site's Google Maps script so these parts are hidden before
+  the page shows.
 
   Each rule stands alone, so a browser that does not know one selector still applies the others.
 */

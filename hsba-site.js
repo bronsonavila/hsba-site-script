@@ -3,7 +3,7 @@
 
   Loaded on every page of hsba.org. The file is kept in this repository so the people who run
   the site can see the custom code that runs on it. The parts it hides are in hsba-site.css,
-  which the page can load in its <head>; if it does not, this script loads it.
+  which the page loads with its own tag.
 
   What it does:
   - Hides the account status label ("Active Member") and its dot in the header, the label in
@@ -23,8 +23,8 @@
     (one GET) and kept for the browser tab (sessionStorage).
 
   If anything here fails, the page shows as it does without this script, except for the parts
-  hidden by hsba-site.css. (If the stylesheet is in the <head> and this script does not run,
-  the card's Account Snapshot list stays hidden.)
+  hidden by hsba-site.css. (If this script does not run, the card's Account Snapshot list
+  stays hidden.)
 */
 (function () {
   if (window.__hsbaSite) return;
@@ -38,22 +38,6 @@
     HIDDEN_SNAPSHOT_LINES: ['Member Number', 'Account Credit'], // card lines, by the text before ":"
     STORAGE_KEY: 'hsbaSiteJdNumber' // sessionStorage key: {user, jdNumber}
   };
-
-  // 1. The hidden parts are in hsba-site.css, next to this file. If the page does not
-  //    already load it (in its <head>), it is loaded here.
-  var STYLESHEET = 'hsba-site.css';
-  var thisScript = document.currentScript; // only set while this file first runs
-
-  function loadStylesheet() {
-    if (document.querySelector('link[href*="' + STYLESHEET + '"]')) return;
-    var link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = thisScript && thisScript.src
-      ? new URL(STYLESHEET, thisScript.src).href
-      : 'https://bronsonavila.github.io/hsba-site-script/' + STYLESHEET;
-    document.head.appendChild(link);
-  }
-  loadStylesheet();
 
   function cleanText(text) {
     return String(text || '').replace(/\s+/g, ' ').trim();
@@ -145,7 +129,7 @@
       });
   }
 
-  // 2. The card's Account Snapshot.
+  // The card's Account Snapshot.
   function updateSnapshot(traits) {
     var heading = Array.prototype.filter.call(document.querySelectorAll('.card h6'), function (element) {
       return /account snapshot/i.test(element.textContent);
