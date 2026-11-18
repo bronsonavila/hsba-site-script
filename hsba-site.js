@@ -8,6 +8,7 @@
   - Hides the account status label ("Active Member") and its dot in the header, the label in
     the account menu, and the label on the My Account card. The label shows the state of the
     website account, not the attorney's membership status.
+  - My Account sidebar (desktop and mobile menu): hides "My Memberships & Subscriptions".
   - My Account card, "Account Snapshot": hides "Member Number" (the website's own account
     number, not the JD number) and "Account Credit". Shows "JD Number" and "Membership Status".
 
@@ -36,13 +37,15 @@
     STORE: 'hsbaSiteJd' // sessionStorage key: {user, jd}
   };
 
-  // 1. The labels and the dot, by their place in the page (their color changes with the state).
+  // 1. The labels and the dot, by their place in the page (their color changes with the state),
+  //    and the sidebar link, by its address.
   var style = document.createElement('style');
   style.textContent =
     '.nav-account-status,' + // header
     '.nav-account-status-dot,' + // header: the dot on the avatar
     '.nav-account-menu__panel__inner > div > div.inline-flex,' + // account menu
-    '.card .pt-16 > .flex-wrap.justify-center' + // My Account card
+    '.card .pt-16 > .flex-wrap.justify-center,' + // My Account card
+    'li:has(> a[href$="/my-account/memberships-and-subscriptions"])' + // My Account sidebar
     '{display:none!important}' +
     '.card .pt-16:has(> .flex-wrap.justify-center){padding-top:3.5rem}';
   document.head.appendChild(style);
