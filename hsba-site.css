@@ -10,15 +10,15 @@
 
 /* The account status label ("Active Member") and its dot. The label shows the state of the
    website account, not the attorney's membership status. */
-.nav-account-status { display: none !important; }                                      /* header */
-.nav-account-status-dot { display: none !important; }                                  /* header: the dot on the avatar */
-.nav-account-menu__panel__inner > div > div.inline-flex { display: none !important; }   /* account menu */
-.card .pt-16 > .flex-wrap.justify-center { display: none !important; }                  /* My Account card */
-.card .pt-16:has(> .flex-wrap.justify-center) { padding-top: 3.5rem; }
+.nav-account-status { display: none !important; }                                         /* header */
+.nav-account-status-dot { display: none !important; }                                     /* header: the dot on the avatar */
+.nav-account-menu__panel__inner > div > hr + div.inline-flex { display: none !important; } /* account menu: under the name */
+aside .card .pt-16 > .flex-wrap.justify-center { display: none !important; }              /* My Account card: under the picture */
+aside .card .pt-16:has(> .flex-wrap.justify-center) { padding-top: 3.5rem; }
 
 /* My Account sidebar (desktop and mobile menu): "My Memberships & Subscriptions" */
-li:has(> a[href$="/my-account/memberships-and-subscriptions"]) { display: none !important; }
+nav li:has(> a[href$="/my-account/memberships-and-subscriptions"]) { display: none !important; }
 
 /* My Account card, "Account Snapshot": hidden until hsba-site.js has set its lines
    (it marks the list with data-hsba). */
-.card:has(.pt-16) h6 + hr + ul:not([data-hsba]) { display: none !important; }
+aside .card:has(.pt-16) h6 + hr + ul:not([data-hsba]) { display: none !important; }
