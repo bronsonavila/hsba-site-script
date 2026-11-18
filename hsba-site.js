@@ -29,12 +29,12 @@
   window.__hsbaSite = true;
 
   var SETTINGS = {
-    JD_FIELD: '1d5ca75a-fb83-44a1-855d-0376b703be36', // "JD Number" custom field
+    JD_FIELD_ID: '1d5ca75a-fb83-44a1-855d-0376b703be36', // "JD Number" custom field
     JD_PAGE: '/my-account/pages/personal-information',
     JD_LABEL: 'JD Number',
     STATUS_LABEL: 'Membership Status',
-    HIDE_SNAPSHOT: ['Member Number', 'Account Credit'], // card lines, by the text before ":"
-    STORE: 'hsbaSiteJd' // sessionStorage key: {user, jd}
+    HIDDEN_SNAPSHOT_LINES: ['Member Number', 'Account Credit'], // card lines, by the text before ":"
+    STORAGE_KEY: 'hsbaSiteJdNumber' // sessionStorage key: {user, jdNumber}
   };
 
   // 1. The labels and the dot, by their place in the page (their color changes with the state),
@@ -50,98 +50,119 @@
     '.card .pt-16:has(> .flex-wrap.justify-center){padding-top:3.5rem}';
   document.head.appendChild(style);
 
-  function clean(t) { return String(t || '').replace(/\s+/g, ' ').trim(); }
+  function cleanText(text) {
+    return String(text || '').replace(/\s+/g, ' ').trim();
+  }
 
   // The member's traits: the queued identify call, else the loaded library.
-  function traits() {
-    var a = window.analytics;
-    if (Array.isArray(a)) {
-      for (var i = 0; i < a.length; i++) {
-        var call = Array.prototype.slice.call(a[i] || []);
-        if (call[0] === 'identify') {
-          var t = call.slice(1).filter(function (x) { return x && typeof x === 'object'; })[0];
-          if (t) return t;
+  function memberTraits() {
+    var analytics = window.analytics;
+    if (Array.isArray(analytics)) {
+      for (var index = 0; index < analytics.length; index++) {
+        var queuedCall = Array.prototype.slice.call(analytics[index] || []);
+        if (queuedCall[0] === 'identify') {
+          var traits = queuedCall.slice(1).filter(function (argument) {
+            return argument && typeof argument === 'object';
+          })[0];
+          if (traits) return traits;
         }
       }
     }
-    try { if (a && typeof a.user === 'function') return a.user().traits() || null; } catch (e) {}
+    try {
+      if (analytics && typeof analytics.user === 'function') return analytics.user().traits() || null;
+    } catch (error) {}
     return null;
   }
 
   // The JD number from a page's Livewire data, or '' if not there.
-  function jdFrom(root) {
-    var els = root.querySelectorAll('[wire\\:initial-data]');
-    for (var i = 0; i < els.length; i++) {
+  function jdNumberFrom(page) {
+    var components = page.querySelectorAll('[wire\\:initial-data]');
+    for (var index = 0; index < components.length; index++) {
       try {
-        var data = JSON.parse(els[i].getAttribute('wire:initial-data')).serverMemo.data;
-        var v = data && data.customFormData && data.customFormData[SETTINGS.JD_FIELD];
-        if (v != null) return clean(v);
-      } catch (e) {}
+        var data = JSON.parse(components[index].getAttribute('wire:initial-data')).serverMemo.data;
+        var value = data && data.customFormData && data.customFormData[SETTINGS.JD_FIELD_ID];
+        if (value != null) return cleanText(value);
+      } catch (error) {}
     }
     return '';
   }
 
-  function stored(user) {
+  function storedJdNumber(userId) {
     try {
-      var s = JSON.parse(sessionStorage.getItem(SETTINGS.STORE) || 'null');
-      return s && s.user === user ? s.jd : null;
-    } catch (e) { return null; }
+      var saved = JSON.parse(sessionStorage.getItem(SETTINGS.STORAGE_KEY) || 'null');
+      return saved && saved.user === userId ? saved.jdNumber : null;
+    } catch (error) {
+      return null;
+    }
   }
 
-  function store(user, jd) {
-    try { sessionStorage.setItem(SETTINGS.STORE, JSON.stringify({ user: user, jd: jd })); } catch (e) {}
+  function storeJdNumber(userId, jdNumber) {
+    try {
+      sessionStorage.setItem(SETTINGS.STORAGE_KEY, JSON.stringify({ user: userId, jdNumber: jdNumber }));
+    } catch (error) {}
   }
 
-  function getJd(user, done) {
-    var here = jdFrom(document);
-    if (here || location.pathname === SETTINGS.JD_PAGE) { store(user, here); return done(here); }
-    var s = stored(user);
-    if (s !== null) return done(s);
+  function getJdNumber(userId, done) {
+    var onThisPage = jdNumberFrom(document);
+    if (onThisPage || location.pathname === SETTINGS.JD_PAGE) {
+      storeJdNumber(userId, onThisPage);
+      return done(onThisPage);
+    }
+    var stored = storedJdNumber(userId);
+    if (stored !== null) return done(stored);
     fetch(SETTINGS.JD_PAGE, { credentials: 'same-origin' })
-      .then(function (r) { return r.ok ? r.text() : ''; })
-      .then(function (html) {
-        var jd = html ? jdFrom(new DOMParser().parseFromString(html, 'text/html')) : '';
-        store(user, jd);
-        done(jd);
+      .then(function (response) {
+        return response.ok ? response.text() : '';
       })
-      .catch(function () { done(''); });
+      .then(function (html) {
+        var jdNumber = html ? jdNumberFrom(new DOMParser().parseFromString(html, 'text/html')) : '';
+        storeJdNumber(userId, jdNumber);
+        done(jdNumber);
+      })
+      .catch(function () {
+        done('');
+      });
   }
 
   // 2. The card's Account Snapshot.
-  function snapshot(t) {
-    var h = Array.prototype.filter.call(document.querySelectorAll('.card h6'), function (e) {
-      return /account snapshot/i.test(e.textContent);
+  function updateSnapshot(traits) {
+    var heading = Array.prototype.filter.call(document.querySelectorAll('.card h6'), function (element) {
+      return /account snapshot/i.test(element.textContent);
     })[0];
-    var ul = h && h.parentElement.querySelector('ul');
-    if (!ul || ul.getAttribute('data-hsba')) return;
-    ul.setAttribute('data-hsba', '1');
-    Array.prototype.forEach.call(ul.children, function (li) {
-      var name = clean(li.textContent).split(':')[0];
-      if (SETTINGS.HIDE_SNAPSHOT.indexOf(name) >= 0) li.style.display = 'none';
+    var list = heading && heading.parentElement.querySelector('ul');
+    if (!list || list.getAttribute('data-hsba')) return;
+    list.setAttribute('data-hsba', '1');
+
+    Array.prototype.forEach.call(list.children, function (item) {
+      var lineName = cleanText(item.textContent).split(':')[0];
+      if (SETTINGS.HIDDEN_SNAPSHOT_LINES.indexOf(lineName) >= 0) item.style.display = 'none';
     });
-    function line(label, value) {
-      var li = document.createElement('li');
-      li.appendChild(document.createTextNode(label + ': '));
-      var b = document.createElement('span');
-      b.className = 'font-semibold';
-      b.textContent = value;
-      li.appendChild(b);
-      ul.appendChild(li);
-      return b;
+
+    function addLine(label, value) {
+      var item = document.createElement('li');
+      item.appendChild(document.createTextNode(label + ': '));
+      var valueElement = document.createElement('span');
+      valueElement.className = 'font-semibold';
+      valueElement.textContent = value;
+      item.appendChild(valueElement);
+      list.appendChild(item);
+      return valueElement;
     }
-    var status = clean(t && t.primary_membership_plan);
-    var jdLine = line(SETTINGS.JD_LABEL, '…');
-    if (status) line(SETTINGS.STATUS_LABEL, status);
-    getJd(String(t && (t.uuid || t.id) || ''), function (jd) {
-      if (jd) jdLine.textContent = jd;
-      else jdLine.parentElement.style.display = 'none';
+
+    var membershipStatus = cleanText(traits && traits.primary_membership_plan);
+    var jdValue = addLine(SETTINGS.JD_LABEL, '…');
+    if (membershipStatus) addLine(SETTINGS.STATUS_LABEL, membershipStatus);
+
+    getJdNumber(String((traits && (traits.uuid || traits.id)) || ''), function (jdNumber) {
+      if (jdNumber) jdValue.textContent = jdNumber;
+      else jdValue.parentElement.style.display = 'none';
     });
   }
 
   function run() {
-    var t = traits();
-    if (!t) return; // guests: nothing to add
-    snapshot(t);
+    var traits = memberTraits();
+    if (!traits) return; // guests: nothing to add
+    updateSnapshot(traits);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
