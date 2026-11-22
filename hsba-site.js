@@ -18,6 +18,8 @@
     analytics.identify(...) for the signed-in member. The page queues that call before the
     analytics library loads, so the queued call is read first; then analytics.user().traits().
     This also works when a browser blocks the analytics library.
+    The traits are read when this file runs, and again when the page is ready. If they cannot
+    be read then (the library is starting), the script tries again for up to 10 seconds.
   - JD Number: the "JD Number" field on Account Settings > Personal Information. On that page it
     is read from the page's own data when it is there. Otherwise it is read once from that page
     (one GET) and kept for the browser tab (sessionStorage).
@@ -165,8 +167,23 @@
     });
   }
 
+  // The traits as they are when this file runs. In <head>, that is before the analytics library
+  // has loaded and taken the queued call away.
+  var earlyTraits = memberTraits();
+  var tries = 0;
+
+  function hasData(traits) {
+    return !!traits && Object.keys(traits).length > 0;
+  }
+
+  // While the analytics library starts, there is a short time when the queued call is gone and
+  // the library is not ready, so the traits cannot be read. Then: try again (every 250 ms, for
+  // 10 seconds at most) before the list is shown without the member's lines.
   function run() {
-    updateSnapshot(memberTraits()); // guests have no card, so nothing happens
+    if (!document.querySelector('aside .card h6')) return; // guests have no card
+    var traits = hasData(earlyTraits) ? earlyTraits : memberTraits();
+    if (!hasData(traits) && tries++ < 40) return setTimeout(run, 250);
+    updateSnapshot(hasData(traits) ? traits : null);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
