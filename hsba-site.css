@@ -12,7 +12,7 @@
    website account, not the attorney's membership status. */
 .nav-account-status { display: none !important; }                                         /* header */
 .nav-account-status-dot { display: none !important; }                                     /* header: the dot on the avatar */
-.nav-account-menu__panel__inner > div > hr + div.inline-flex { display: none !important; } /* account menu: under the name */
+.nav-account-menu__panel__inner > div > hr ~ div.inline-flex { display: none !important; } /* account menu: under the name, or under the organization name. Also holds "Membership Expires Soon" and "Renew Now" */
 aside .card .pt-16 > .flex-wrap.justify-center { display: none !important; }              /* My Account card: under the picture */
 aside .card .pt-16:has(> .flex-wrap.justify-center) { padding-top: 3.5rem; }
 
