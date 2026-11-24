@@ -22,19 +22,3 @@ nav li:has(> a[href$="/my-account/memberships-and-subscriptions"]) { display: no
 /* My Account card, "Account Snapshot": hidden until hsba-site.js has set its lines
    (it marks the list with data-hsba). */
 aside .card:has(.pt-16) h6 + hr + ul:not([data-hsba]) { display: none !important; }
-
-/* Login window: the note that hsba-site.js puts under the email field of the "Enter your email to
-   sign in or create an account" step. */
-.hsba-login-note {
-  margin: 16px 0 0;
-  padding: 10px 12px;
-  border-left: 4px solid #b7791f;
-  border-radius: 3px;
-  background: #fdf6e3;
-  color: #1f2937;
-  font-size: 13px;
-  line-height: 1.45;
-  text-align: left;
-}
-.hsba-login-note strong { font-weight: 700; }
-.hsba-login-note span { white-space: nowrap; }

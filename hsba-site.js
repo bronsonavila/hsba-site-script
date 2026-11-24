@@ -12,9 +12,6 @@
   - My Account sidebar (desktop and mobile menu): hides "My Memberships & Subscriptions".
   - My Account card, "Account Snapshot": hides "Member Number" (the website's own account
     number, not the JD number) and "Account Credit". Shows "JD Number" and "Membership Status".
-  - Login window: shows a note under the email field of the "Enter your email to sign in or
-    create an account" step (what to do when the member cannot use the account email address). The note shows only while the window
-    has exactly that text; on every other step of the window it is taken away.
 
   Where the data comes from:
   - Membership Status: the member's primary membership plan, from the traits the page gives
@@ -42,21 +39,6 @@
     STATUS_LABEL: 'Membership Status',
     HIDDEN_SNAPSHOT_LINES: ['Member Number', 'Account Credit'], // card lines, by the text before ":"
     STORAGE_KEY: 'hsbaSiteJdNumber' // sessionStorage key: {user, jdNumber}
-  };
-
-  var LOGIN = {
-    PROMPT: 'Enter your email to sign in or create an account', // the note shows only under this exact text
-    PROMPT_SELECTOR: '.auth0-lock-form > div > p > span',
-    NOTE_CLASS: 'hsba-login-note',
-    // The note's parts, in order: [text, kind]. 'strong' is bold; 'nowrap' stays on one line.
-    NOTE_PARTS: [
-      ['No longer have access to your account email address?', 'strong'],
-      [' For example, it was an email address at a firm you have left. Do not create a new account. Contact HSBA staff before you log in: '],
-      ['ars@hsba.org', 'nowrap'],
-      [' or '],
-      ['808-537-1868', 'nowrap'],
-      [' during regular business hours.']
-    ]
   };
 
   function cleanText(text) {
@@ -184,60 +166,6 @@
       else jdValue.parentElement.style.display = 'none';
     });
   }
-
-  // The Login window. It is drawn and redrawn by the sign-in library, so the page is watched:
-  // the note is put under the email field when the prompt has exactly the LOGIN.PROMPT text, and
-  // taken away when it does not.
-  // The prompt's text, with each line break read as a space. (innerText is not used: it reads
-  // the line break only when the window is shown, and the window is filled before it is shown.)
-  function promptText(prompt) {
-    return cleanText(
-      Array.prototype.map
-        .call(prompt.childNodes, function (node) {
-          return node.nodeName === 'BR' ? ' ' : node.textContent;
-        })
-        .join('')
-    );
-  }
-
-  function updateLoginNote() {
-    var prompt = document.querySelector(LOGIN.PROMPT_SELECTOR);
-    var note = document.querySelector('.' + LOGIN.NOTE_CLASS);
-    var paragraph = prompt && promptText(prompt) === LOGIN.PROMPT ? prompt.parentElement : null;
-    if (!paragraph) {
-      if (note) note.remove();
-      return;
-    }
-    var container = paragraph.parentElement;
-    if (note && note.parentElement === container && container.lastElementChild === note) return;
-    if (!note) {
-      note = document.createElement('div');
-      note.className = LOGIN.NOTE_CLASS;
-      LOGIN.NOTE_PARTS.forEach(function (part) {
-        var element = part[1] ? document.createElement(part[1] === 'strong' ? 'strong' : 'span') : null;
-        if (element) element.textContent = part[0];
-        note.appendChild(element || document.createTextNode(part[0]));
-      });
-    }
-    container.appendChild(note); // under the email field
-  }
-
-  function watchLoginWindow() {
-    if (typeof MutationObserver !== 'function') return;
-    var waiting = false;
-    new MutationObserver(function () {
-      if (waiting) return;
-      waiting = true;
-      setTimeout(function () {
-        waiting = false;
-        try {
-          updateLoginNote();
-        } catch (error) {}
-      }, 50);
-    }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
-  }
-
-  watchLoginWindow();
 
   // The traits as they are when this file runs. In <head>, that is before the analytics library
   // has loaded and taken the queued call away.
