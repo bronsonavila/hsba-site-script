@@ -22,3 +22,6 @@ nav li:has(> a[href$="/my-account/memberships-and-subscriptions"]) { display: no
 /* My Account card, "Account Snapshot": hidden until hsba-site.js has set its lines
    (it marks the list with data-hsba). */
 aside .card:has(.pt-16) h6 + hr + ul:not([data-hsba]) { display: none !important; }
+
+/* Login window: the blue message box above the email field has no bar at its left edge. */
+.auth0-lock .auth0-global-message.auth0-global-message-info { border-left: 0 !important; }
